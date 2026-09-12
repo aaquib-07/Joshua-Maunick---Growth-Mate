@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Growth Mate — Weekly Campaign Performance Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+ 
+<style>
+/* ── Tokens ── */
+:root {
+  --ink: #1B1B2F;
+  --steel: #2D2D44;
+  --accent: #6C5CE7;
+  --accent-glow: rgba(108, 92, 231, 0.35);
+  --teal: #00CEC9;
+  --amber: #FDCB6E;
+  --mint: #00B894;
+  --rose: #E17055;
+ 
+  --surface: #F7F7FC;
+  --surface-raised: rgba(255,255,255,0.72);
+  --surface-border: rgba(27,27,47,0.08);
+  --text-primary: #1B1B2F;
+  --text-secondary: #5A5A7A;
+  --text-muted: #9090AD;
+  --gradient-start: #1B1B2F;
+  --gradient-end: #2D2D44;
+  --card-shadow: 0 4px 24px rgba(27,27,47,0.08), 0 1px 3px rgba(27,27,47,0.04);
+  --card-hover-shadow: 0 12px 40px rgba(108,92,231,0.12), 0 4px 12px rgba(27,27,47,0.06);
+  --glass-bg: rgba(255,255,255,0.55);
+  --glass-border: rgba(255,255,255,0.6);
+  --intro-bg: #0F0F1E;
+  --kpi-icon-bg: rgba(108,92,231,0.1);
+}
+ 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #0F0F1E;
+    --surface-raised: rgba(45,45,68,0.5);
+    --surface-border: rgba(255,255,255,0.06);
+    --text-primary: #EEEEF5;
+    --text-secondary: #A0A0C0;
+    --text-muted: #6A6A8A;
+    --card-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2);
+    --card-hover-shadow: 0 12px 40px rgba(108,92,231,0.2), 0 4px 12px rgba(0,0,0,0.2);
+    --glass-bg: rgba(45,45,68,0.45);
+    --glass-border: rgba(255,255,255,0.08);
+    --kpi-icon-bg: rgba(108,92,231,0.15);
+  }
+}
+:root[data-theme="dark"] {
+  --surface: #0F0F1E;
+  --surface-raised: rgba(45,45,68,0.5);
+  --surface-border: rgba(255,255,255,0.06);
+  --text-primary: #EEEEF5;
+  --text-secondary: #A0A0C0;
+  --text-muted: #6A6A8A;
+  --card-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2);
+  --card-hover-shadow: 0 12px 40px rgba(108,92,231,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  --glass-bg: rgba(45,45,68,0.45);
+  --glass-border: rgba(255,255,255,0.08);
+  --kpi-icon-bg: rgba(108,92,231,0.15);
+}
+ 
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  padding: 0;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+h1,h2,h3,h4,h5,h6 { font-family: 'Sora', system-ui, sans-serif; }
+ 
+/* ── Intro Overlay ── */
+#intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--intro-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  overflow: hidden;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#intro-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+ 
+.intro-bg-glow {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  filter: blur(80px);
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes pulse-glow {
+  0% { transform: scale(0.8); opacity: 0.4; }
+  100% { transform: scale(1.2); opacity: 0.7; }
+}
+ 
+.intro-rocket {
+  width: 64px;
+  height: 64px;
+  opacity: 0;
+  transform: scale(0.5) translateY(20px);
+  animation: rocket-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+}
+@keyframes rocket-enter {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+ 
+.intro-brand {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: text-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+}
+@keyframes text-enter {
+  to { opacity: 1; transform: translateY(0); }
+}
+ 
+.intro-subtitle {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(13px, 2.5vw, 16px);
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: text-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1s forwards;
+}
+ 
+.intro-loader {
+  width: 120px;
+  height: 2px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 24px;
+  opacity: 0;
+  animation: text-enter 0.5s ease 1.2s forwards;
+}
+.intro-loader-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--teal));
+  border-radius: 2px;
+  animation: loader-fill 1.8s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
+}
+@keyframes loader-fill {
+  to { width: 100%; }
+}
+ 
+.intro-skip {
+  position: absolute;
+  bottom: 32px;
+  right: 32px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 8px 16px;
+  opacity: 0;
+  animation: text-enter 0.4s ease 1.5s forwards;
+  transition: color 0.2s;
+}
+.intro-skip:hover { color: rgba(255,255,255,0.7); }
+ 
+/* ── Dashboard ── */
+#dashboard {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  min-height: 100vh;
+}
+#dashboard.visible { opacity: 1; }
+ 
+/* ── Header ── */
+.header {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+.header::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+}
+ 
+.header-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 28px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+ 
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+ 
+.header-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.header-logo-mark {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+.header-logo-text {
+  font-family: 'Sora', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+ 
+.header-title {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(18px, 3vw, 24px);
+  font-weight: 600;
+  color: #fff;
+  margin: 8px 0 2px;
+  text-wrap: balance;
+}
+.header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 4px;
+}
+.header-meta-item {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.header-meta-item a {
+  color: var(--teal);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.header-meta-item a:hover { opacity: 0.8; }
+ 
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.header-client {
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.5px;
+}
+.header-date {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+}
+ 
+/* ── Main content ── */
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+ 
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.section-label h2 {
+  font-size: clamp(18px, 3vw, 22px);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+.section-label-line {
+  flex: 1;
+  height: 1px;
+  background: var(--surface-border);
+}
+ 
+/* ── KPI Grid ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 860px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+}
+ 
+.kpi-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 16px 16px 0 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-hover-shadow);
+}
+.kpi-card:hover::before { opacity: 1; }
+ 
+.kpi-card[data-accent="violet"]::before { background: linear-gradient(90deg, var(--accent), #8B7CF6); }
+.kpi-card[data-accent="teal"]::before { background: linear-gradient(90deg, var(--teal), #55EFC4); }
+.kpi-card[data-accent="mint"]::before { background: linear-gradient(90deg, var(--mint), #55EFC4); }
+.kpi-card[data-accent="amber"]::before { background: linear-gradient(90deg, var(--amber), #FFEAA7); }
+.kpi-card[data-accent="rose"]::before { background: linear-gradient(90deg, var(--rose), #FAB1A0); }
+ 
+.kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.kpi-icon[data-color="violet"] { background: var(--kpi-icon-bg); color: var(--accent); }
+.kpi-icon[data-color="teal"] { background: rgba(0,206,201,0.1); color: var(--teal); }
+.kpi-icon[data-color="mint"] { background: rgba(0,184,148,0.1); color: var(--mint); }
+.kpi-icon[data-color="amber"] { background: rgba(253,203,110,0.15); color: #E17D1F; }
+.kpi-icon[data-color="rose"] { background: rgba(225,112,85,0.1); color: var(--rose); }
+ 
+.kpi-value {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+}
+.kpi-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+.kpi-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+ 
+/* ── Insights ── */
+.insights-section {
+  margin-top: 48px;
+}
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.insight-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease,
+              border-color 0.25s ease;
+}
+.insight-row:hover {
+  transform: translateX(4px);
+  box-shadow: var(--card-hover-shadow);
+  border-color: rgba(108,92,231,0.2);
+}
+ 
+.insight-icon-wrap {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.insight-icon-wrap[data-tone="teal"]   { background: rgba(0,206,201,0.12); color: var(--teal); }
+.insight-icon-wrap[data-tone="mint"]   { background: rgba(0,184,148,0.12); color: var(--mint); }
+.insight-icon-wrap[data-tone="violet"] { background: var(--kpi-icon-bg);    color: var(--accent); }
+.insight-icon-wrap[data-tone="amber"]  { background: rgba(253,203,110,0.14); color: #D4A017; }
+ 
+.insight-body {
+  min-width: 0;
+}
+.insight-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+  line-height: 1.35;
+}
+.insight-desc {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+ 
+/* ── Footer ── */
+.footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+ 
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+ 
+<!-- ── Intro Overlay ── -->
+<div id="intro-overlay">
+  <div class="intro-bg-glow"></div>
+  <svg class="intro-rocket" viewBox="0 0 64 64" fill="none">
+    <path d="M32 4 L44 28 L40 28 L40 44 L24 44 L24 28 L20 28 Z" fill="white"/>
+    <circle cx="32" cy="24" r="5" fill="#0F0F1E"/>
+    <path d="M24 44 L20 56 L28 48 Z" fill="rgba(255,255,255,0.6)"/>
+    <path d="M40 44 L44 56 L36 48 Z" fill="rgba(255,255,255,0.6)"/>
+    <path d="M28 44 L32 58 L36 44 Z" fill="#6C5CE7"/>
+  </svg>
+  <div class="intro-brand">Growth Mate</div>
+  <div class="intro-subtitle">Weekly Performance Report</div>
+  <div class="intro-loader"><div class="intro-loader-bar"></div></div>
+  <button class="intro-skip" id="skip-btn" aria-label="Skip intro">Skip</button>
+</div>
+ 
+<!-- ── Dashboard ── -->
+<div id="dashboard">
+ 
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-logo-row">
+          <svg class="header-logo-mark" viewBox="0 0 40 40" fill="none">
+            <path d="M20 2 L30 20 L27 20 L27 32 L13 32 L13 20 L10 20 Z" fill="white"/>
+            <circle cx="20" cy="16" r="3.5" fill="rgba(27,27,47,0.9)"/>
+            <path d="M13 32 L10 40 L17 34 Z" fill="rgba(255,255,255,0.5)"/>
+            <path d="M27 32 L30 40 L23 34 Z" fill="rgba(255,255,255,0.5)"/>
+            <path d="M17 32 L20 42 L23 32 Z" fill="#6C5CE7"/>
+          </svg>
+          <span class="header-logo-text">Growth M<span style="position:relative;top:-1px">&#9650;</span>te</span>
+        </div>
+        <h1 class="header-title">Weekly Campaign Performance Report</h1>
+        <div class="header-meta">
+          <span class="header-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Joshua Maunick
+          </span>
+          <span class="header-meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <a href="https://www.growthmate.com.au/" target="_blank" rel="noopener">growthmate.com.au</a>
+          </span>
+          <span class="header-meta-item" id="report-date">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="header-client">Client Report</span>
+        <span class="header-date" id="header-date-short"></span>
+      </div>
+    </div>
+  </header>
+ 
+  <!-- KPIs -->
+  <main class="main">
+    <div class="section-label">
+      <h2>Current Week Performance</h2>
+      <div class="section-label-line"></div>
+    </div>
+ 
+    <div class="kpi-grid" id="kpi-grid"></div>
+ 
+    <!-- Insights -->
+    <div class="insights-section">
+      <div class="section-label">
+        <h2>Campaign Performance Insights</h2>
+        <div class="section-label-line"></div>
+      </div>
+      <div class="insights-list" id="insights-list"></div>
+    </div>
+  </main>
+ 
+  <footer class="footer">
+    Powered by <a href="https://www.growthmate.com.au/" target="_blank" rel="noopener">Growth Mate</a> &middot; Campaign analytics dashboard
+  </footer>
+</div>
+ 
+<script>
+(function() {
+  // ── Data ──
+  var TOTAL_CALLS = 418;
+  var CONNECTED = 96;
+  var CALLBACKS = 2;
+  var APPOINTMENTS = 7;
+  var CONNECTED_PCT = ((CONNECTED / TOTAL_CALLS) * 100).toFixed(2);
+  var APPT_PCT = ((APPOINTMENTS / CONNECTED) * 100).toFixed(2);
+ 
+  var kpis = [
+    {
+      value: TOTAL_CALLS.toLocaleString(),
+      title: 'Total Calls Taken',
+      desc: 'Total outbound calls placed this week across all campaigns',
+      accent: 'violet',
+      icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+    },
+    {
+      value: CONNECTED.toLocaleString(),
+      title: 'Calls Connected',
+      desc: 'Calls that reached a live prospect and engaged in conversation',
+      accent: 'teal',
+      icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+    },
+    {
+      value: CONNECTED_PCT + '%',
+      title: 'Connected Calls %',
+      desc: 'Proportion of total calls that resulted in a live connection',
+      accent: 'mint',
+      icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>'
+    },
+    {
+      value: CALLBACKS.toLocaleString(),
+      title: 'Total Callbacks',
+      desc: 'Prospects who requested a follow-up call at a later time',
+      accent: 'amber',
+      icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>'
+    },
+    {
+      value: APPOINTMENTS.toLocaleString(),
+      title: 'Appointments Set',
+      desc: 'Confirmed meetings booked with qualified prospects this week',
+      accent: 'violet',
+      icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>'
+    },
+    {
+      value: APPT_PCT + '%',
+      title: 'Appointment %',
+      desc: 'Conversion rate from connected calls to confirmed appointments',
+      accent: 'rose',
+      icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
+    }
+  ];
+ 
+  // ── Render KPIs ──
+  var grid = document.getElementById('kpi-grid');
+  kpis.forEach(function(k) {
+    var card = document.createElement('div');
+    card.className = 'kpi-card';
+    card.setAttribute('data-accent', k.accent);
+    card.innerHTML =
+      '<div class="kpi-icon" data-color="' + k.accent + '">' + k.icon + '</div>' +
+      '<div class="kpi-value">' + k.value + '</div>' +
+      '<div class="kpi-title">' + k.title + '</div>' +
+      '<div class="kpi-desc">' + k.desc + '</div>';
+    grid.appendChild(card);
+  });
+ 
+  // ── Insights ──
+  var insights = [
+    {
+      title: 'Strong Outreach Activity',
+      desc: 'Consistent call volume is driving steady top-of-funnel engagement and creating a reliable outreach pipeline.',
+      tone: 'teal',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'
+    },
+    {
+      title: 'Healthy Connection Rate',
+      desc: 'The current connection rate reflects effective targeting and improved prospect engagement quality.',
+      tone: 'mint',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+    },
+    {
+      title: 'Qualified Conversations Building Momentum',
+      desc: 'Connected calls are translating into meaningful conversations, supporting higher intent interactions.',
+      tone: 'violet',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+    },
+    {
+      title: 'Appointment Flow Established',
+      desc: 'The campaign is successfully converting conversations into scheduled appointments, contributing to pipeline growth.',
+      tone: 'teal',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+    },
+    {
+      title: 'Scalable Opportunity Ahead',
+      desc: 'With current performance trends, the campaign shows strong potential for scaling outreach and increasing booked meetings.',
+      tone: 'amber',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>'
+    }
+  ];
+ 
+  var insightsList = document.getElementById('insights-list');
+  insights.forEach(function(ins) {
+    var row = document.createElement('div');
+    row.className = 'insight-row';
+    row.innerHTML =
+      '<div class="insight-icon-wrap" data-tone="' + ins.tone + '">' + ins.icon + '</div>' +
+      '<div class="insight-body">' +
+        '<div class="insight-title">' + ins.title + '</div>' +
+        '<div class="insight-desc">' + ins.desc + '</div>' +
+      '</div>';
+    insightsList.appendChild(row);
+  });
+ 
+  // ── Date ──
+  var now = new Date();
+  var opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('report-date').insertAdjacentText('beforeend', ' ' + now.toLocaleDateString('en-AU', opts));
+  document.getElementById('header-date-short').textContent = now.toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' });
+ 
+  // ── Intro ──
+  var overlay = document.getElementById('intro-overlay');
+  var dash = document.getElementById('dashboard');
+  var dismissed = false;
+ 
+  function dismissIntro() {
+    if (dismissed) return;
+    dismissed = true;
+    overlay.classList.add('fade-out');
+    dash.classList.add('visible');
+    setTimeout(function() {
+      overlay.style.display = 'none';
+    }, 700);
+  }
+ 
+  document.getElementById('skip-btn').addEventListener('click', dismissIntro);
+  setTimeout(dismissIntro, 3200);
+})();
+</script>
+</body>
+</html>
